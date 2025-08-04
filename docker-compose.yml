@@ -1,0 +1,26 @@
+services:
+  alc-postgres:
+    container_name: alcraft_postgres
+    image: postgres:13
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: '10M'
+        max-file: '3'
+    networks:
+      - alc-network
+    environment:
+      POSTGRES_DB: alc
+      POSTGRES_USER: alc-user
+      POSTGRES_PASSWORD: "asasgasgkfhjasjf"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
+networks:
+  alc-network:
