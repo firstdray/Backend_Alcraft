@@ -1,0 +1,33 @@
+import {BaseEntity, Column, Entity, Index, PrimaryGeneratedColumn} from "typeorm";
+
+
+@Entity('t-shirt')
+export class TShirtEntity extends BaseEntity {
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Index()
+    @Column({ name: 'name_collection'})
+    nameCollection: string;
+
+    @Column()
+    price: number;
+
+    @Column({ name: 'picture_path', type: 'jsonb', nullable: true})
+    picturePath: Array<string>;
+
+    @Column()
+    discount: number;
+
+    @Column({ name: 'tech_info', type: 'jsonb', nullable: true })
+    techInfo: Array<string>;
+
+    @Column({ type: 'jsonb', nullable: true })
+    size: Array<string>;
+
+    @Column({ type: 'jsonb', nullable: true })
+    density: Array<number>;
+
+    @Column({nullable: true})
+    description: string;
+}

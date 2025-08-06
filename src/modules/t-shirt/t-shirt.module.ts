@@ -1,10 +1,12 @@
 import {Module} from "@nestjs/common";
 import {TypeOrmModule} from "@nestjs/typeorm";
 import * as process from "node:process";
-import {UsersEntity} from "./users.entity";
+import {TShirtEntity} from "./t-shirt.entity";
 import {ConfigModule} from "@nestjs/config";
+import {TShirtController} from "./t-shirt.controller";
+import {TShirtService} from "./t-shirt.service";
 
-const entities = [UsersEntity];
+const entities = [TShirtEntity];
 
 @Module({
     imports: [
@@ -25,9 +27,9 @@ const entities = [UsersEntity];
         }),
         TypeOrmModule.forFeature(entities),
     ],
-    controllers: [],
-    providers: [],
+    controllers: [TShirtController],
+    providers: [TShirtService],
     exports: [],
 })
 
-export class UsersModule {}
+export class TShirtModule {}
