@@ -7,6 +7,14 @@ export class TShirtEntity extends BaseEntity {
     id: number;
 
     @Index()
+    @Column({name: 't_shirt_id'})
+    tShirtId: string;
+
+    @Index()
+    @Column({name: 't_shirt_name'})
+    tShirtName: string;
+
+    @Index()
     @Column({ name: 'name_collection'})
     nameCollection: string;
 
