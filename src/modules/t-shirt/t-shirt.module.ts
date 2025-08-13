@@ -1,8 +1,7 @@
 import {Module} from "@nestjs/common";
 import {TypeOrmModule} from "@nestjs/typeorm";
-import * as process from "node:process";
 import {TShirtEntity} from "./t-shirt.entity";
-import {ConfigModule} from "@nestjs/config";
+import {ConfigModule, ConfigService} from "@nestjs/config";
 import {TShirtController} from "./t-shirt.controller";
 import {TShirtService} from "./t-shirt.service";
 
@@ -14,17 +13,21 @@ const entities = [TShirtEntity];
             isGlobal: true,
             load: [],
         }),
-        TypeOrmModule.forRoot({
-            type: 'postgres',
-            host: process.env.DB_HOST,
-            port: Number(process.env.DB_PORT),
-            username: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
-            ssl: {rejectUnauthorized: false},
-            autoLoadEntities: true,
-            synchronize: true,
-            entities: entities,
+        TypeOrmModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigModule],
+            useFactory: (configService: ConfigService) => ({
+                type: 'postgres',
+                host: configService.get<string>('DB_HOST'),
+                port: configService.get<number>('DB_PORT'),
+                username: configService.get<string>('DB_USER'),
+                password: configService.get<string>('DB_PASSWORD'),
+                database: configService.get<string>('DB_NAME'),
+                ssl: {rejectUnauthorized: false},
+                autoLoadEntities: true,
+                synchronize: true,
+                entities: entities,
+            }),
         }),
         TypeOrmModule.forFeature(entities),
     ],
