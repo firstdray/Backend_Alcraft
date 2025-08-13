@@ -15,7 +15,7 @@ const entities = [TShirtEntity];
         }),
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
-            inject: [ConfigModule],
+            inject: [ConfigService],
             useFactory: (configService: ConfigService) => ({
                 type: 'postgres',
                 host: configService.get<string>('DB_HOST'),
