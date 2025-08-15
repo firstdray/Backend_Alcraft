@@ -1,7 +1,7 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
 import {TShirtEntity} from "./t-shirt.entity";
-import {DeleteResult, Repository} from "typeorm";
+import {Repository} from "typeorm";
 import {UpdateTShirtDto} from "./DTO/update-t-shirt.dto";
 
 @Injectable()
@@ -17,7 +17,7 @@ export class TShirtService {
     }
 
     public async updateTShirt(id: string, updateData: UpdateTShirtDto): Promise<TShirtEntity> {
-        const tShirt = await this.tShirtRepository.findOne({
+        const tShirt = await this.tShirtRepository.findOneBy({
             tShirtId: id
         });
 
