@@ -17,7 +17,7 @@ export class TShirtService {
     }
 
     public async updateTShirt(id: string, updateData: UpdateTShirtDto): Promise<TShirtEntity> {
-        const tShirt = await this.tShirtRepository.findOneBy({
+        const tShirt = await this.tShirtRepository.findOne({
             tShirtId: id
         });
 
