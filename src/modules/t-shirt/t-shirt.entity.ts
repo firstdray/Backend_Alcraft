@@ -18,6 +18,14 @@ export class TShirtEntity extends BaseEntity {
     @Column({ name: 'name_collection'})
     nameCollection: string;
 
+    @Index()
+    @Column()
+    color: string
+
+    @Index()
+    @Column()
+    cut: string;
+
     @Column()
     price: number;
 
