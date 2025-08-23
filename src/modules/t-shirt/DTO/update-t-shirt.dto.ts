@@ -36,4 +36,12 @@ export class UpdateTShirtDto {
     @IsOptional()
     @IsArray()
     techInfo?: string[];
+
+    @IsOptional()
+    @IsArray()
+    cut?: string;
+
+    @IsOptional()
+    @IsArray()
+    color?: string;
 }
