@@ -3,6 +3,8 @@ import {TypeOrmModule} from "@nestjs/typeorm";
 import * as process from "node:process";
 import {UsersEntity} from "./users.entity";
 import {ConfigModule} from "@nestjs/config";
+import {UsersService} from "./users.service";
+import {UsersController} from "./users.controller";
 
 const entities = [UsersEntity];
 
@@ -25,8 +27,8 @@ const entities = [UsersEntity];
         }),
         TypeOrmModule.forFeature(entities),
     ],
-    controllers: [],
-    providers: [],
+    controllers: [UsersController],
+    providers: [UsersService],
     exports: [],
 })
 

@@ -19,6 +19,12 @@ export class UsersEntity extends BaseEntity {
     @Column()
     surname: string;
 
+    @Column({ nullable: true })
+    patronymic: string;
+
     @Column()
     phone: string;
+
+    @Column()
+    email: string;
 }
