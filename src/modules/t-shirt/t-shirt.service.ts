@@ -64,13 +64,16 @@ export class TShirtService {
         return this.tShirtRepository.save(tShirt);
     }
 
-    public async deleteTShirt(id: string) {
+    public async deleteTShirt(id: string): Promise<boolean> {
         const tShirt = await this.tShirtRepository.delete({
             tShirtId: id
         })
 
         if (!tShirt) {
             new NotFoundException(`TShirt with ID ${id} not found`);
+            return false;
         }
+
+        return true;
     }
 }
