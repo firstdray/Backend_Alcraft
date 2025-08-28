@@ -7,9 +7,11 @@ export class CreateUserDTO {
     @IsString()
     pass: string;
 
+    @IsOptional()
     @IsString()
     name: string;
 
+    @IsOptional()
     @IsString()
     surname: string;
 
@@ -17,6 +19,7 @@ export class CreateUserDTO {
     @IsString()
     patronymic: string;
 
+    @IsOptional()
     @IsString()
     phone: string;
 

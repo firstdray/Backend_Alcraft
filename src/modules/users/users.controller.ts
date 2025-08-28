@@ -4,17 +4,17 @@ import {CreateUserDTO} from "./DTO/create-user.dto";
 import {UsersEntity} from "./users.entity";
 import {UpdateUserDTO} from "./DTO/update-user.dto";
 
-@Controller('user')
+@Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
-    @Get(':id')
+    @Get('/get/:id')
     @HttpCode(HttpStatus.OK)
     getUser(@Param('id') id: string) {
         return this.usersService.getUserById(id);
     }
 
-    @Post()
+    @Post('/create')
     @HttpCode(HttpStatus.CREATED)
     async createUser(@Body() createUserDTO: CreateUserDTO): Promise<{
         success: boolean;
@@ -30,13 +30,13 @@ export class UsersController {
         };
     }
 
-    @Put(':id')
+    @Put('/update/:id')
     @HttpCode(HttpStatus.OK)
     updateUser(@Param('id') id: string, @Body() updateData: UpdateUserDTO):Promise<UsersEntity> {
         return this.usersService.updateUser(id, updateData);
     }
 
-    @Delete(':id')
+    @Delete('/:id')
     @HttpCode(HttpStatus.NO_CONTENT)
     deleteUser(@Param('id') id: string) {
         return this.usersService.deleteUser(id);

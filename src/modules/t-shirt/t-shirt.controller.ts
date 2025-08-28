@@ -8,13 +8,13 @@ import {CreateTShirtDTO} from "./DTO/create-t-shirt.dto";
 export class TShirtController {
     constructor(private readonly tShirtService: TShirtService) {}
 
-    @Get()
+    @Get('/get')
     @HttpCode(HttpStatus.OK)
     getTShirt(): Promise<TShirtEntity[]> {
         return this.tShirtService.getTShirt();
     }
 
-    @Post()
+    @Post('/create')
     @HttpCode(HttpStatus.CREATED)
     async createTShirt(@Body() createTShirtDTO: CreateTShirtDTO): Promise<{
         success: boolean;
@@ -30,14 +30,14 @@ export class TShirtController {
         };
     }
 
-    @Put(':id')
+    @Put('/update/:id')
     @HttpCode(HttpStatus.OK)
     updateTShirt(@Param('id') id: string, @Body() updateData: UpdateTShirtDto
     ): Promise<TShirtEntity> {
         return this.tShirtService.updateTShirt(id, updateData);
     }
 
-    @Delete(':id')
+    @Delete('/:id')
     @HttpCode(HttpStatus.NO_CONTENT)
     deleteTShirt(@Param('id') id: string) {
         return this.tShirtService.deleteTShirt(id);

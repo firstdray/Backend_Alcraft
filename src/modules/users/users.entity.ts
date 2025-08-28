@@ -13,16 +13,16 @@ export class UsersEntity extends BaseEntity {
     @Column()
     pass: string;
 
-    @Column()
+    @Column({nullable: true})
     name: string;
 
-    @Column()
+    @Column({nullable: true})
     surname: string;
 
     @Column({ nullable: true })
     patronymic: string;
 
-    @Column()
+    @Column({nullable: true})
     phone: string;
 
     @Column()
