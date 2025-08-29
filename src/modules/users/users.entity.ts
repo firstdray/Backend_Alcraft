@@ -7,7 +7,7 @@ export class UsersEntity extends BaseEntity {
     id: number;
 
     @Index()
-    @Column({ name: 'user_id', type: 'bigint' })
+    @Column({ name: 'user_id' })
     user_id: string;
 
     @Column()
