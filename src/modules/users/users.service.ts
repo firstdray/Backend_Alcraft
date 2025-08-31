@@ -2,28 +2,22 @@ import {InjectRepository} from "@nestjs/typeorm";
 import {UsersEntity} from "./users.entity";
 import {Repository} from "typeorm";
 import {CreateUserDTO} from "./DTO/create-user.dto";
-import {UnauthorizedException} from "@nestjs/common";
+import {Injectable, UnauthorizedException} from "@nestjs/common";
 import {UpdateUserDTO} from "./DTO/update-user.dto";
-import * as bcrypt from "bcryptjs";
+import * as uuid from "uuid";
+import {HashedHelper} from "../common/helpers/hashed.helper";
 
+@Injectable()
 export class UsersService {
     constructor(
         @InjectRepository(UsersEntity)
-        private readonly usersRepository: Repository<UsersEntity>
+        private readonly usersRepository: Repository<UsersEntity>,
+
     ) {}
-
-    private async hashPassword(password: string) {
-        const saltRounds = 10;
-        return await bcrypt.hash(password, saltRounds);
-    }
-
-    private async comparePassword(password: string, hash: string): Promise<boolean> {
-        return bcrypt.compare(password, hash);
-    }
 
     public async addNewUser(createData: CreateUserDTO): Promise<UsersEntity> {
         const exUser = await this.usersRepository.findOne({
-            where: {user_id: createData.userId},
+            where: {email: createData.email},
         })
 
         if (exUser) {
@@ -31,9 +25,9 @@ export class UsersService {
         }
 
         try {
-            const hashedPassword = await this.hashPassword(createData.pass);
+            const hashedPassword = await HashedHelper.hashPassword(createData.pass);
             const newUser = this.usersRepository.create({
-                user_id: createData.userId,
+                user_id: uuid.v4(),
                 pass: hashedPassword,
                 name: createData.name,
                 surname: createData.surname,
@@ -60,6 +54,12 @@ export class UsersService {
         Object.assign(user, updateData);
 
         return this.usersRepository.save(user);
+    }
+
+    public async getUser(criteria: {email?: string; phone?: string}) {
+        return this.usersRepository.findOne({
+            where: criteria
+        })
     }
 
     public async getUserById(id: string) {

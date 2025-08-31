@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import {ConfigModule} from "@nestjs/config";
 import {UsersModule} from "../users/users.module";
 import {TShirtModule} from "../t-shirt/t-shirt.module";
+import {OrdersModule} from "../orders/orders.module";
+import {AuthModule} from "../auth/auth.module";
 
 @Module({
   imports: [
@@ -11,10 +11,10 @@ import {TShirtModule} from "../t-shirt/t-shirt.module";
         load: [],
         isGlobal: true,
       }),
+      AuthModule,
       UsersModule,
       TShirtModule,
-  ],
-  controllers: [AppController],
-  providers: [AppService, ],
+      OrdersModule,
+  ]
 })
 export class AppModule {}

@@ -1,46 +1,89 @@
-import {Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put} from '@nestjs/common';
+import {
+    Body, ConflictException,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    InternalServerErrorException, Logger, NotFoundException,
+    Param,
+    Post,
+    Put
+} from '@nestjs/common';
 import {TShirtService} from "./t-shirt.service";
 import {TShirtEntity} from "./t-shirt.entity";
 import {UpdateTShirtDto} from "./DTO/update-t-shirt.dto";
 import {CreateTShirtDTO} from "./DTO/create-t-shirt.dto";
+import {SuccessResponse} from "../common/interface/api-response.interface";
+import {ResponseHelper} from "../common/helpers/response.helper";
 
 @Controller('t-shirts')
 export class TShirtController {
+    private readonly logger = new Logger(TShirtService.name);
     constructor(private readonly tShirtService: TShirtService) {}
 
     @Get('/get')
     @HttpCode(HttpStatus.OK)
-    getTShirt(): Promise<TShirtEntity[]> {
-        return this.tShirtService.getTShirt();
+    async getTShirt(): Promise<SuccessResponse<TShirtEntity[]>> {
+        try {
+            const tShirts = await this.tShirtService.getTShirt()
+            return ResponseHelper.tShirtsFound(tShirts);
+        } catch (error) {
+            this.logger.error(`Failed to fetch T-shirts`, error.stack);
+            throw new InternalServerErrorException(ResponseHelper.internalError())
+        }
     }
 
     @Post('/create')
     @HttpCode(HttpStatus.CREATED)
-    async createTShirt(@Body() createTShirtDTO: CreateTShirtDTO): Promise<{
-        success: boolean;
-        message: string;
-        data: TShirtEntity;
-    }> {
-        const tShirt = await this.tShirtService.addTShirt(createTShirtDTO);
+    async createTShirt(@Body() createTShirtDTO: CreateTShirtDTO): Promise<SuccessResponse<TShirtEntity>> {
+        try {
+            const tShirt = await this.tShirtService.addTShirt(createTShirtDTO);
+            return ResponseHelper.tShirtCreated(tShirt)
+        } catch (error) {
+            this.logger.error('Failed to add T-shirt', error);
 
-        return {
-            success: true,
-            message: 'T-shirt added successfully',
-            data: tShirt
-        };
+            if (error instanceof ConflictException) {
+                throw new ConflictException(ResponseHelper.tShirtAlreadyExists())
+            }
+            throw new InternalServerErrorException(ResponseHelper.internalError())
+        }
+
     }
 
     @Put('/update/:id')
     @HttpCode(HttpStatus.OK)
-    updateTShirt(@Param('id') id: string, @Body() updateData: UpdateTShirtDto
-    ): Promise<TShirtEntity> {
-        return this.tShirtService.updateTShirt(id, updateData);
+    async updateTShirt(@Param('id') id: string, @Body() updateData: UpdateTShirtDto
+    ): Promise<SuccessResponse<TShirtEntity>> {
+        try {
+            const tShirt = await this.tShirtService.updateTShirt(id, updateData);
+            return ResponseHelper.tShirtUpdated(tShirt);
+        } catch (error) {
+            this.logger.error(`Failed to update T-shirt ${id}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException(ResponseHelper.tShirtNotFound())
+            }
+
+            throw new InternalServerErrorException(ResponseHelper.internalError())
+        }
     }
 
     @Delete('/:id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    deleteTShirt(@Param('id') id: string) {
-        return this.tShirtService.deleteTShirt(id);
+    async deleteTShirt(@Param('id') id: string): Promise<SuccessResponse<null>> {
+        try {
+            await this.tShirtService.deleteTShirt(id);
+            return ResponseHelper.tShirtDeleted();
+        } catch (error) {
+            this.logger.error(`Failed to delete T-shirt ${id}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException(ResponseHelper.tShirtNotFound())
+            }
+
+            throw new InternalServerErrorException(ResponseHelper.internalError())
+        }
     }
 
 }

@@ -2,9 +2,6 @@ import {IsOptional, IsString} from "class-validator";
 
 export class CreateUserDTO {
     @IsString()
-    userId: string;
-
-    @IsString()
     pass: string;
 
     @IsOptional()

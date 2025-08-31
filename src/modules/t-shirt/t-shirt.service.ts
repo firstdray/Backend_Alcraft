@@ -1,12 +1,14 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import {ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
 import {TShirtEntity} from "./t-shirt.entity";
 import {Repository} from "typeorm";
 import {UpdateTShirtDto} from "./DTO/update-t-shirt.dto";
 import {CreateTShirtDTO} from "./DTO/create-t-shirt.dto";
+import {ResponseHelper} from "../common/helpers/response.helper";
 
 @Injectable()
 export class TShirtService {
+    private readonly logger = new Logger(TShirtService.name);
 
     constructor(
         @InjectRepository(TShirtEntity)
@@ -14,17 +16,26 @@ export class TShirtService {
     ) {}
 
     public async getTShirt(): Promise<TShirtEntity[]> {
-        return this.tShirtRepository.find();
+        this.logger.log('Fetching all T-Shirts');
+
+        try {
+            const tShirts = await this.tShirtRepository.find();
+            this.logger.log(`Found ${tShirts.length} T-Shirts`);
+            return tShirts;
+        } catch (error) {
+            this.logger.error('Failed to fetch T-Shirts', error.stack);
+            throw new InternalServerErrorException(ResponseHelper.internalError());
+        }
     }
 
     public async addTShirt(createData: CreateTShirtDTO): Promise<TShirtEntity> {
-
+        this.logger.log(`Adding new T-Shirt with ID: ${createData.tShirtId}`);
         const exTShirt = await this.tShirtRepository.findOne({
             where: { tShirtId: createData.tShirtId },
         });
 
         if (exTShirt) {
-            throw new NotFoundException(`T-shirt with ID ${createData.tShirtId} already exists`);
+            throw new ConflictException(ResponseHelper.tShirtAlreadyExists())
         }
 
         try {
@@ -44,36 +55,58 @@ export class TShirtService {
                 description: createData.description || '',
             })
 
-            return this.tShirtRepository.save(newTShirt);
+            const saved =  await this.tShirtRepository.save(newTShirt);
+            this.logger.log(`T-Shirt with ID ${createData.tShirtId} created successfully`)
+
+            return saved;
         } catch (error) {
-            console.error('Error adding TShirt', error);
+            this.logger.error(`Failed to create T-Shirt ${createData.tShirtId}`, error.stack);
+            throw new InternalServerErrorException(ResponseHelper.internalError());
         }
     }
 
     public async updateTShirt(id: string, updateData: UpdateTShirtDto): Promise<TShirtEntity> {
+        this.logger.log(`Updating T-Shirt with ID: ${id}`);
         const tShirt = await this.tShirtRepository.findOneBy({
             tShirtId: id
         });
 
         if (!tShirt) {
-            new Error(`TShirt with id ${id} not found`);
+            this.logger.warn(`T-Shirt with ID ${id} not found`);
+            throw new NotFoundException(ResponseHelper.tShirtNotFound());
         }
 
-        Object.assign(tShirt, updateData);
+        try {
+            Object.assign(tShirt, updateData);
+            const updatedTShirt = await this.tShirtRepository.save(tShirt);
 
-        return this.tShirtRepository.save(tShirt);
+            this.logger.log(`T-Shirt with ID ${id} updated successfully`);
+            return updatedTShirt;
+        } catch (error) {
+            this.logger.error(`Failed to update T-Shirt ${id}`, error.stack);
+            throw new InternalServerErrorException(ResponseHelper.internalError());
+        }
+
     }
 
     public async deleteTShirt(id: string): Promise<boolean> {
-        const tShirt = await this.tShirtRepository.delete({
-            tShirtId: id
-        })
+        this.logger.log(`Deleting T-Shirt with ID: ${id}`);
+        try {
+            const result = await this.tShirtRepository.delete({
+                tShirtId: id
+            });
 
-        if (!tShirt) {
-            new NotFoundException(`TShirt with ID ${id} not found`);
-            return false;
+            if (result.affected === 0) {
+                this.logger.warn(`T-Shirt with ID ${id} not found for deletion`);
+                throw new NotFoundException(ResponseHelper.tShirtNotFound());
+            }
+
+            this.logger.log(`T-Shirt with ID ${id} deleted successfully`);
+            return true;
+
+        } catch (error) {
+            this.logger.error(`Failed to delete T-Shirt ${id}`, error.stack);
+            throw new InternalServerErrorException(ResponseHelper.internalError());
         }
-
-        return true;
     }
 }
