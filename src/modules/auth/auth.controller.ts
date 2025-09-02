@@ -1,14 +1,17 @@
 import {
     Body,
-    Controller,
+    Controller, Get,
     NotFoundException,
-    Post,
-    UnauthorizedException
+    Post, Req,
+    UnauthorizedException, UseGuards
 } from "@nestjs/common";
 import {AuthService} from "./auth.service";
 import {ErrorCodes} from "../common/enum/error-codes.enum";
 import {CheckAuthDTO} from "./DTO/check-auth.dto";
 import {SuccessCodes} from "../common/enum/success-codes.enum";
+import {RefreshTokenDTO} from "./DTO/refresh-token.dto";
+import {AuthGuard} from "@nestjs/passport";
+import {CreateUserDTO} from "../users/DTO/create-user.dto";
 
 @Controller('auth')
 export class AuthController {
@@ -48,4 +51,15 @@ export class AuthController {
             };
         }
     }
+
+    @Post('refresh')
+    async refresh(@Body() refreshTokenDto: RefreshTokenDTO) {
+        return this.authService.refreshTokens(refreshTokenDto);
+    }
+
+    // @Post('logout')
+    // @UseGuards(AuthGuard('jwt'))
+    // async logout(@Body() body: {userId: string}) {
+    //     return this.authService.logout(body.userId);
+    // }
 }

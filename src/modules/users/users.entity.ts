@@ -8,7 +8,7 @@ export class UsersEntity extends BaseEntity {
 
     @Index()
     @Column({ name: 'user_id' })
-    user_id: string;
+    userId: string;
 
     @Column()
     pass: string;

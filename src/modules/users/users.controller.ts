@@ -3,6 +3,7 @@ import {UsersService} from "./users.service";
 import {CreateUserDTO} from "./DTO/create-user.dto";
 import {UsersEntity} from "./users.entity";
 import {UpdateUserDTO} from "./DTO/update-user.dto";
+import {UserWithoutDTO} from "./DTO/user-without.dto";
 
 @Controller('users')
 export class UsersController {
@@ -19,7 +20,7 @@ export class UsersController {
     async createUser(@Body() createUserDTO: CreateUserDTO): Promise<{
         success: boolean;
         message: string;
-        data: UsersEntity;
+        data: UserWithoutDTO;
     }> {
         const user = await this.usersService.addNewUser(createUserDTO);
 
