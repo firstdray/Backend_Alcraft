@@ -1,6 +1,5 @@
 import {SuccessCodes} from "../enum/success-codes.enum";
 import {ErrorCodes} from "../enum/error-codes.enum";
-import {TShirtEntity} from "../../t-shirt/t-shirt.entity";
 import {ErrorResponse, SuccessResponse} from "../interface/api-response.interface";
 
 export class ResponseHelper {
@@ -23,28 +22,34 @@ export class ResponseHelper {
         }
     }
 
-    static tShirtsFound(tShirts: TShirtEntity[]): SuccessResponse<TShirtEntity[]> {
-        return this.success('T-shirts retrieved successfully', SuccessCodes.DATA_RETRIEVED, tShirts);
+    // Success
+    static created<T>(entity: string, data: T, code: SuccessCodes): SuccessResponse<T> {
+        return this.success(`${entity} created successfully`, code, data)
     }
 
-    static tShirtCreated(tShirt: TShirtEntity): SuccessResponse<TShirtEntity> {
-        return this.success('T-shirt created successfully', SuccessCodes.TSHIRT_CREATED, tShirt);
+    static updated<T>(entity: string, data: T, code: SuccessCodes): SuccessResponse<T> {
+        return this.success(`${entity} updated successfully`, code, data)
     }
 
-    static tShirtUpdated(tShirt: TShirtEntity): SuccessResponse<TShirtEntity> {
-        return this.success('T-shirt updated successfully', SuccessCodes.TSHIRT_UPDATED, tShirt);
+    static retrieved<T>(entity: string, data: T, code: SuccessCodes): SuccessResponse<T> {
+        return this.success(`${entity} retrieved successfully`, code, data)
     }
 
-    static tShirtDeleted(): SuccessResponse<null> {
-        return this.success('T-shirt deleted successfully', SuccessCodes.TSHIRT_DELETED, null);
+    static delete<T>(entity: string, data: T, code: SuccessCodes): SuccessResponse<T> {
+        return this.success(`${entity} deleted successfully`, code, data)
     }
 
-    static tShirtNotFound(): ErrorResponse {
-        return this.error('T-shirt not found', ErrorCodes.TSHIRT_NOT_FOUND);
+    static found<T>(entity: string, data: T, code: SuccessCodes): SuccessResponse<T> {
+        return this.success(`${entity} found successfully`, code, data)
     }
 
-    static tShirtAlreadyExists(): ErrorResponse {
-        return this.error('T-shirt already exists', ErrorCodes.TSHIRT_ALREADY_EXISTS);
+    // Error
+    static notFound(entity: string, code: ErrorCodes): ErrorResponse {
+        return this.error(`${entity} not found`, code);
+    }
+
+    static alreadyExists(entity: string, code: ErrorCodes): ErrorResponse {
+        return this.error(`${entity} already exists`, code)
     }
 
     static internalError(): ErrorResponse {

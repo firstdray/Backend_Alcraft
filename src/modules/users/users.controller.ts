@@ -1,45 +1,97 @@
-import {Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put} from "@nestjs/common";
+import {
+    Body,
+    ConflictException,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    InternalServerErrorException,
+    Logger, NotFoundException,
+    Param,
+    Post,
+    Put
+} from "@nestjs/common";
 import {UsersService} from "./users.service";
 import {CreateUserDTO} from "./DTO/create-user.dto";
-import {UsersEntity} from "./users.entity";
 import {UpdateUserDTO} from "./DTO/update-user.dto";
 import {UserWithoutDTO} from "./DTO/user-without.dto";
+import {SuccessResponse} from "../common/interface/api-response.interface";
+import {ResponseHelper} from "../common/helpers/response.helper";
+import {SuccessCodes} from "../common/enum/success-codes.enum";
+import {ErrorCodes} from "../common/enum/error-codes.enum";
 
 @Controller('users')
 export class UsersController {
+    private readonly logger = new Logger(UsersController.name);
     constructor(private readonly usersService: UsersService) {}
 
     @Get('/get/:id')
     @HttpCode(HttpStatus.OK)
-    getUser(@Param('id') id: string) {
-        return this.usersService.getUserById(id);
+    async getUser(@Param('id') id: string): Promise<SuccessResponse<UserWithoutDTO>> {
+        try {
+            const foundUser = await this.usersService.getUserById(id);
+            return ResponseHelper.found('User', foundUser, SuccessCodes.USER_FOUND)
+        } catch (err) {
+            this.logger.error('Failed to fetch User', err.stack);
+
+            if (err instanceof NotFoundException) {
+                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND));
+            }
+
+            throw new InternalServerErrorException(ResponseHelper.internalError())
+        }
     }
 
     @Post('/create')
     @HttpCode(HttpStatus.CREATED)
-    async createUser(@Body() createUserDTO: CreateUserDTO): Promise<{
-        success: boolean;
-        message: string;
-        data: UserWithoutDTO;
-    }> {
-        const user = await this.usersService.addNewUser(createUserDTO);
+    async createUser(@Body() createUserDTO: CreateUserDTO): Promise<SuccessResponse<UserWithoutDTO>> {
+        try {
+            const user = await this.usersService.addNewUser(createUserDTO);
+            return ResponseHelper.created('Users', user, SuccessCodes.USER_CREATED);
+        }catch(error) {
+            this.logger.error('Failed to add user', error.stack);
 
-        return {
-            success: true,
-            message: 'User added successfully',
-            data: user
-        };
+            if (error instanceof ConflictException) {
+                throw new ConflictException(ResponseHelper.alreadyExists('User', ErrorCodes.USER_ALREADY_EXISTS))
+            }
+
+            throw new InternalServerErrorException(ResponseHelper.internalError())
+        }
     }
 
     @Put('/update/:id')
     @HttpCode(HttpStatus.OK)
-    updateUser(@Param('id') id: string, @Body() updateData: UpdateUserDTO):Promise<UsersEntity> {
-        return this.usersService.updateUser(id, updateData);
+    async updateUser(@Param('id') id: string, @Body() updateData: UpdateUserDTO):Promise<SuccessResponse<UserWithoutDTO>> {
+        try {
+            const updateUser = await this.usersService.updateUser(id, updateData);
+            return ResponseHelper.updated('User', updateUser, SuccessCodes.USER_UPDATED)
+        } catch (error) {
+            this.logger.error('Failed to update user', error.stack);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND))
+            }
+
+            throw new InternalServerErrorException(ResponseHelper.internalError())
+        }
     }
 
     @Delete('/:id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    deleteUser(@Param('id') id: string) {
-        return this.usersService.deleteUser(id);
+    async deleteUser(@Param('id') id: string): Promise<SuccessResponse<null>> {
+        this.logger.log(`Deleting User with ID: ${id}`)
+        try {
+            await this.usersService.deleteUser(id);
+            return ResponseHelper.delete('User', null, SuccessCodes.USER_DELETED);
+        } catch (error) {
+            this.logger.error(`Failed to delete User with ID: ${id}`, error.stack);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException(ResponseHelper.notFound('T-Shirts', ErrorCodes.TSHIRT_NOT_FOUND))
+            }
+
+            throw new InternalServerErrorException(ResponseHelper.internalError())
+        }
     }
 }

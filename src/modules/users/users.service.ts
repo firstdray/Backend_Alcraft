@@ -2,28 +2,30 @@ import {InjectRepository} from "@nestjs/typeorm";
 import {UsersEntity} from "./users.entity";
 import {Repository} from "typeorm";
 import {CreateUserDTO} from "./DTO/create-user.dto";
-import {Injectable, UnauthorizedException} from "@nestjs/common";
+import {ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException,} from "@nestjs/common";
 import {UpdateUserDTO} from "./DTO/update-user.dto";
 import * as uuid from "uuid";
 import {HashedHelper} from "../common/helpers/hashed.helper";
-import {SuccessCodes} from "../common/enum/success-codes.enum";
+import {ResponseHelper} from "../common/helpers/response.helper";
 import {UserWithoutDTO} from "./DTO/user-without.dto";
+import {ErrorCodes} from "../common/enum/error-codes.enum";
 
 @Injectable()
 export class UsersService {
+    private readonly logger = new Logger(UsersService.name);
     constructor(
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
 
     ) {}
 
-    public async addNewUser(createData: CreateUserDTO){
+    public async addNewUser(createData: CreateUserDTO): Promise<UserWithoutDTO> {
         const exUser = await this.usersRepository.findOne({
             where: {email: createData.email},
         })
 
         if (exUser) {
-            throw new UnauthorizedException("User already exists");
+            throw new ConflictException(ResponseHelper.alreadyExists('User', ErrorCodes.USER_ALREADY_EXISTS))
         }
 
         try {
@@ -38,33 +40,38 @@ export class UsersService {
                 email: createData.email,
             })
 
-            await this.usersRepository.save(newUser);
+            const saved = await this.usersRepository.save(newUser);
+            this.logger.log(`User with ID: ${saved.id} created successfully`);
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const {pass, ...userWithoutPass} = newUser;
-            return {
-                success: true,
-                message: 'Created User Success',
-                user: userWithoutPass,
-                code: SuccessCodes.USER_CREATED,
-            };
+            return userWithoutPass;
         } catch (error) {
-            console.error('Error adding new user', error);
+            this.logger.error(`Failed to create user ${createData.email}`, error.stack);
+            throw new InternalServerErrorException(ResponseHelper.internalError());
         }
     }
 
     public async updateUser(id: string, updateData: UpdateUserDTO): Promise<UsersEntity> {
-        const user = await this.usersRepository.findOneBy({
-            userId: id,
-        })
+        this.logger.log(`Updating User with ID: ${id}`);
+        try {
+            const user = await this.usersRepository.findOneBy({
+                userId: id,
+            })
 
-        if (!user) {
-            new Error(`User with id ${id} not found`);
+            if (!user) {
+                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND));
+            }
+
+            this.usersRepository.merge(user, updateData);
+            const updatedUser =  this.usersRepository.save(user);
+
+            this.logger.log(`User with ID ${id} updated successfully`)
+            return updatedUser;
+        }catch (err) {
+            this.logger.error(`Failed to update user with ID: ${id}`, err.stack);
+            throw new InternalServerErrorException(ResponseHelper.internalError());
         }
-
-        Object.assign(user, updateData);
-
-        return this.usersRepository.save(user);
     }
 
     public async getUser(criteria: {email?: string; phone?: string}) {
@@ -73,27 +80,42 @@ export class UsersService {
         })
     }
 
-    public async getUserById(id: string) {
-        const user =  await this.usersRepository.findOne({
-            where: { userId: id},
-            select: ['userId', 'email', 'name', 'surname', 'patronymic', 'phone']
-        })
+    public async getUserById(id: string): Promise<UserWithoutDTO> {
+        this.logger.log(`Fetching user with ID: ${id}`);
 
-        if (!user) {
-            new Error(`User with id ${id} not found`);
+        try {
+            const user =  await this.usersRepository.findOneBy({
+                 userId: id
+            })
+
+
+            if (!user) {
+                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND));
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const {pass, ...userWithoutPass} = user;
+            return userWithoutPass;
+        } catch (err) {
+            this.logger.error(`User with ID ${id} not found`, err.stack)
+            throw new InternalServerErrorException(ResponseHelper.internalError());
         }
-
-        return user;
     }
 
     public async deleteUser(id: string): Promise<boolean> {
-        const user = await this.usersRepository.delete(id);
+        try {
+            const result = await this.usersRepository.delete(id);
 
-        if (!user) {
-            new Error(`User with id ${id} not found`);
-            return false;
+            if (result.affected === 0) {
+                this.logger.warn(`User with ID: ${id} not found`)
+                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND));
+            }
+
+            this.logger.log(`User with ID ${id} deleted successfully`);
+            return true;
+        } catch (err) {
+            this.logger.error(`Failed to delete User with ID: ${id}`, err.stack);
+            throw new InternalServerErrorException(ResponseHelper.internalError());
         }
-
-        return true;
     }
 }

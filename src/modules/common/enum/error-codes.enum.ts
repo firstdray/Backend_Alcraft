@@ -9,6 +9,7 @@ export enum ErrorCodes {
     INVALID_EMAIL = 'INVALID_EMAIL',
     INVALID_PHONE = 'INVALID_PHONE',
     INVALID_PASSWORD = 'INVALID_PASSWORD',
+    INVALID_TOKEN = 'INVALID_TOKEN',
 
     // T-shirts errors
     TSHIRT_NOT_FOUND = 'TSHIRT_NOT_FOUND',
@@ -22,6 +23,9 @@ export enum ErrorCodes {
     // Payment errors
     PAYMENT_FAILED = 'PAYMENT_FAILED',
     PAYMENT_INVALID = 'PAYMENT_INVALID',
+
+    // JWT errors
+    TOKEN_EXPIRED = 'TOKEN_EXPIRED',
 
     // Server errors
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',

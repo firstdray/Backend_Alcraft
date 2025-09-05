@@ -5,6 +5,7 @@ import {Repository} from "typeorm";
 import {UpdateTShirtDto} from "./DTO/update-t-shirt.dto";
 import {CreateTShirtDTO} from "./DTO/create-t-shirt.dto";
 import {ResponseHelper} from "../common/helpers/response.helper";
+import {ErrorCodes} from "../common/enum/error-codes.enum";
 
 @Injectable()
 export class TShirtService {
@@ -35,7 +36,7 @@ export class TShirtService {
         });
 
         if (exTShirt) {
-            throw new ConflictException(ResponseHelper.tShirtAlreadyExists())
+            throw new ConflictException(ResponseHelper.alreadyExists('T-Shirt', ErrorCodes.TSHIRT_ALREADY_EXISTS))
         }
 
         try {
@@ -67,17 +68,19 @@ export class TShirtService {
 
     public async updateTShirt(id: string, updateData: UpdateTShirtDto): Promise<TShirtEntity> {
         this.logger.log(`Updating T-Shirt with ID: ${id}`);
-        const tShirt = await this.tShirtRepository.findOneBy({
-            tShirtId: id
-        });
 
-        if (!tShirt) {
-            this.logger.warn(`T-Shirt with ID ${id} not found`);
-            throw new NotFoundException(ResponseHelper.tShirtNotFound());
-        }
 
         try {
-            Object.assign(tShirt, updateData);
+            const tShirt = await this.tShirtRepository.findOneBy({
+                tShirtId: id
+            });
+
+            if (!tShirt) {
+                this.logger.warn(`T-Shirt with ID ${id} not found`);
+                throw new NotFoundException(ResponseHelper.notFound('T-Shirt', ErrorCodes.TSHIRT_NOT_FOUND));
+            }
+
+            this.tShirtRepository.merge(tShirt, updateData);
             const updatedTShirt = await this.tShirtRepository.save(tShirt);
 
             this.logger.log(`T-Shirt with ID ${id} updated successfully`);
@@ -97,11 +100,11 @@ export class TShirtService {
             });
 
             if (result.affected === 0) {
-                this.logger.warn(`T-Shirt with ID ${id} not found for deletion`);
-                throw new NotFoundException(ResponseHelper.tShirtNotFound());
+                this.logger.warn(`T-Shirt with ID: ${id} not found`);
+                throw new NotFoundException(ResponseHelper.notFound('T-Shirt', ErrorCodes.TSHIRT_NOT_FOUND));
             }
 
-            this.logger.log(`T-Shirt with ID ${id} deleted successfully`);
+            this.logger.log(`T-Shirt with ID: ${id} deleted successfully`);
             return true;
 
         } catch (error) {

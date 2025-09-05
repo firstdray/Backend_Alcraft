@@ -7,11 +7,11 @@ export class UpdateTShirtDto {
 
     @IsOptional()
     @IsNumber()
-    price?: string;
+    price?: number;
 
     @IsOptional()
     @IsNumber()
-    discount?: string;
+    discount?: number;
 
     @IsOptional()
     @IsString()
@@ -27,7 +27,7 @@ export class UpdateTShirtDto {
 
     @IsOptional()
     @IsArray()
-    density?: string[];
+    density?: number[];
 
     @IsOptional()
     @IsString()

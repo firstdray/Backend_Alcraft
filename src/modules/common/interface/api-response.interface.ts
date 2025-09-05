@@ -15,6 +15,3 @@ export interface ErrorResponse extends ApiResponse<never> {
     success: false;
     data?: never;
 }
-
-export type DefaultSuccessResponse = SuccessResponse<unknown>;
-export type DefaultErrorResponse = ErrorResponse;

@@ -1,13 +1,22 @@
-import {Injectable, Logger, NotFoundException, UnauthorizedException} from "@nestjs/common";
+import {
+    Injectable,
+    InternalServerErrorException,
+    Logger,
+    NotFoundException,
+    UnauthorizedException
+} from "@nestjs/common";
 import {UsersService} from "../users/users.service";
 import {CheckAuthDTO} from "./DTO/check-auth.dto";
 import {ErrorCodes} from "../common/enum/error-codes.enum";
 import {HashedHelper} from "../common/helpers/hashed.helper";
 import {SuccessCodes} from "../common/enum/success-codes.enum";
-import {JwtService} from "@nestjs/jwt";
-import {UsersEntity} from "../users/users.entity";
+import {JsonWebTokenError, JwtService, TokenExpiredError} from "@nestjs/jwt";
 import * as process from "node:process";
 import {RefreshTokenDTO} from "./DTO/refresh-token.dto";
+import {UserWithoutDTO} from "../users/DTO/user-without.dto";
+import {SuccessResponse} from "../common/interface/api-response.interface";
+import {ResponseHelper} from "../common/helpers/response.helper";
+import {TokenPayloadDTO} from "./DTO/token-payload.dto";
 
 @Injectable()
 export class AuthService {
@@ -77,51 +86,59 @@ export class AuthService {
         }
     }
 
-    public async refreshTokens(refreshTokenDTO: RefreshTokenDTO) {
+    public async refreshTokens(refreshTokenDTO: RefreshTokenDTO): Promise<SuccessResponse<{
+        access_token: string;
+        refresh_token: string;
+        user: UserWithoutDTO;
+    }>> {
         try {
             const payload = this.jwtService.verify(refreshTokenDTO.refreshToken, {
-                secret: process.env.JWT_REFRESH_SECRET
-            })
+                secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
+            });
 
-            const user = await this.usersService.getUserById(payload.userId)
+            const user = await this.usersService.getUserById(payload.userId);
 
             if (!user) {
-                this.logger.log('User not found');
-                throw new UnauthorizedException({
-                    message: 'Invalid password',
-                    code: ErrorCodes.INVALID_PASSWORD,
-                })
+                this.logger.warn(`User not found for refresh token: ${payload.userId}`);
+                throw new UnauthorizedException(
+                    ResponseHelper.error('User not found', ErrorCodes.USER_NOT_FOUND)
+                );
             }
 
-            const tokens = await this.generateTokens(user)
+            const tokens = await this.generateTokens(user);
 
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {pass, ...userWithoutPass} = user
+            return ResponseHelper.success(
+                'Tokens refreshed successfully',
+                SuccessCodes.TOKENS_REFRESHED,
+                {
+                    access_token: tokens.accessToken,
+                    refresh_token: tokens.refreshToken,
+                    user: user
+                }
+            );
 
-            return {
-                success: true,
-                message: 'Refresh token success',
-                access_token: tokens.accessToken,
-                refresh_token: tokens.refreshToken,
-                user: userWithoutPass,
-                code: SuccessCodes.TOKENS_REFRESHED
-            }
         } catch (err) {
-            this.logger.log('Refresh token failed');
+            this.logger.error('Refresh token failed', err.message);
+
+            if (err instanceof TokenExpiredError) {
+                throw new UnauthorizedException(
+                    ResponseHelper.error('Refresh token expired', ErrorCodes.TOKEN_EXPIRED)
+                );
+            }
+
+            if (err instanceof JsonWebTokenError) {
+                throw new UnauthorizedException(
+                    ResponseHelper.error('Invalid refresh token', ErrorCodes.INVALID_TOKEN)
+                );
+            }
 
             if (err instanceof UnauthorizedException) {
-                return {
-                    success: false,
-                    message: 'Invalid password',
-                    code: ErrorCodes.INVALID_PASSWORD,
-                }
+                throw err; // Пробрасываем уже созданные UnauthorizedException
             }
 
-            return {
-                success: false,
-                message: 'Something went wrong',
-                code: ErrorCodes.INTERNAL_SERVER_ERROR,
-            }
+            throw new InternalServerErrorException(
+                ResponseHelper.internalError()
+            );
         }
     }
 
@@ -133,26 +150,27 @@ export class AuthService {
     //     }
     // }
 
-    private async generateTokens(user: UsersEntity) {
-        const payload = {
-            userId: user.id,
-            email: user.email,
-            phone: user.phone,
-        }
+    private async generateTokens(tokenPayload: TokenPayloadDTO) {
+      const accessToken = this.jwtService.sign(
+          {
+              userId: tokenPayload.userId,
+              email: tokenPayload.email,
+              phone: tokenPayload.phone,
+          },
+          {
+              secret: process.env.JWT_SECRET,
+              expiresIn: '15m'
+          }
+      );
 
-        const accessToken = this.jwtService.sign(payload, {
-            secret: process.env.JWT_SECRET,
-            expiresIn: '15m'
-        })
+      const refreshToken = this.jwtService.sign(
+          { userId: tokenPayload.userId },
+          {
+              secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+              expiresIn: '60d'
+          }
+      );
 
-        const refreshToken = this.jwtService.sign(
-            {userId: user.userId},
-            {
-                secret: process.env.JWT_SECRET,
-                expiresIn: '60d'
-            }
-        )
-
-        return { accessToken, refreshToken }
+      return { accessToken, refreshToken }
     }
 }
