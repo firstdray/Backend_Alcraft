@@ -52,6 +52,10 @@ export class ResponseHelper {
         return this.error(`${entity} already exists`, code)
     }
 
+    static invalidPassword(entity: string, code: ErrorCodes): ErrorResponse {
+        return this.error(`${entity} invalid password`, code)
+    }
+
     static internalError(): ErrorResponse {
         return this.error('Internal server error', ErrorCodes.INTERNAL_SERVER_ERROR);
     }

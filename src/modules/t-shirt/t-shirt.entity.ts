@@ -19,7 +19,7 @@ export class TShirtEntity extends BaseEntity {
     nameCollection: string;
 
     @Index()
-    @Column({name: 'collection_id'})
+    @Column({name: 'collection_id', nullable: true})
     collectionID: string;
 
     @Index()

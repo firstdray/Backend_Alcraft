@@ -13,10 +13,10 @@ import {SuccessCodes} from "../common/enum/success-codes.enum";
 import {JsonWebTokenError, JwtService, TokenExpiredError} from "@nestjs/jwt";
 import * as process from "node:process";
 import {RefreshTokenDTO} from "./DTO/refresh-token.dto";
-import {UserWithoutDTO} from "../users/DTO/user-without.dto";
 import {SuccessResponse} from "../common/interface/api-response.interface";
 import {ResponseHelper} from "../common/helpers/response.helper";
 import {TokenPayloadDTO} from "./DTO/token-payload.dto";
+import {UserJWT} from "../users/DTO/userJWTdto";
 
 @Injectable()
 export class AuthService {
@@ -26,10 +26,7 @@ export class AuthService {
 
     public async login(checkData: CheckAuthDTO) {
         try {
-            const user = await this.usersService.getUser({
-                email: checkData.email,
-                phone: checkData.phone,
-            })
+            const user = await this.usersService.getUser(checkData.email, checkData.phone)
 
             if (!user) {
                 this.logger.log('User not found');
@@ -42,61 +39,47 @@ export class AuthService {
             const isPasswordValid = await HashedHelper.comparePassword(checkData.pass, user.pass)
 
             if (!isPasswordValid) {
-                this.logger.log('Invalid password');
-                throw new UnauthorizedException({
-                    message: 'Invalid password',
-                    code: ErrorCodes.INVALID_PASSWORD,
-                })
+                this.logger.warn('Invalid password');
+                throw new Error(ErrorCodes.INVALID_PASSWORD)
             }
 
             const tokens = await this.generateTokens(user)
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {pass, ...userWithoutPass} = user;
+            const {pass, email, phone, id: DBid, ...userPublic} = user;
             return {
                 success: true,
                 message: 'Login Success',
                 access_token: tokens.accessToken,
                 refresh_token: tokens.refreshToken,
-                user: userWithoutPass,
+                user: userPublic,
                 code: SuccessCodes.USER_LOGGED_IN,
             };
 
         } catch (err) {
-            if (err instanceof NotFoundException) {
-                return {
-                    success: false,
-                    message: 'User not found',
-                    code: ErrorCodes.USER_NOT_FOUND,
-                }
-            }
-            if (err instanceof UnauthorizedException) {
-                return {
-                    success: false,
-                    message: 'Invalid password',
-                    code: ErrorCodes.INVALID_PASSWORD,
-                }
+            if (err.message === ErrorCodes.USER_NOT_FOUND) {
+                throw new Error(ErrorCodes.USER_NOT_FOUND)
             }
 
-            return {
-                success: false,
-                message: 'Something went wrong',
-                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+            if (err.message === ErrorCodes.INVALID_PASSWORD) {
+                throw new Error(ErrorCodes.INVALID_PASSWORD);
             }
+
+            throw new Error(ErrorCodes.INTERNAL_SERVER_ERROR);
         }
     }
 
     public async refreshTokens(refreshTokenDTO: RefreshTokenDTO): Promise<SuccessResponse<{
         access_token: string;
         refresh_token: string;
-        user: UserWithoutDTO;
+        user: UserJWT;
     }>> {
         try {
             const payload = this.jwtService.verify(refreshTokenDTO.refreshToken, {
                 secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
             });
 
-            const user = await this.usersService.getUserById(payload.userId);
+            const user = await this.usersService.getUserByJWT(payload.userId);
 
             if (!user) {
                 this.logger.warn(`User not found for refresh token: ${payload.userId}`);

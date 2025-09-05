@@ -1,17 +1,16 @@
 import {
     Body,
-    Controller, Get,
+    Controller, InternalServerErrorException,
     NotFoundException,
-    Post, Req,
-    UnauthorizedException, UseGuards
+    Post,
+    UnauthorizedException
 } from "@nestjs/common";
 import {AuthService} from "./auth.service";
 import {ErrorCodes} from "../common/enum/error-codes.enum";
 import {CheckAuthDTO} from "./DTO/check-auth.dto";
 import {SuccessCodes} from "../common/enum/success-codes.enum";
 import {RefreshTokenDTO} from "./DTO/refresh-token.dto";
-import {AuthGuard} from "@nestjs/passport";
-import {CreateUserDTO} from "../users/DTO/create-user.dto";
+import {ResponseHelper} from "../common/helpers/response.helper";
 
 @Controller('auth')
 export class AuthController {
@@ -20,35 +19,29 @@ export class AuthController {
     @Post('login')
     async checkUser(@Body() checkData: CheckAuthDTO) {
         try {
-            const user = await this.authService.login(checkData);
+            const result = await this.authService.login(checkData);
 
-            return {
-                success: true,
-                message: 'Login successfully',
-                data: user,
-                code: SuccessCodes.USER_LOGGED_IN
-            }
+            return ResponseHelper.success(
+                result.message,
+                SuccessCodes.USER_LOGGED_IN,
+                {
+                    access_token: result.access_token,
+                    refresh_token: result.refresh_token,
+                    user: result.user,
+                }
+            )
         } catch (error) {
-            if (error instanceof NotFoundException) {
-                return {
-                    success: false,
-                    message: 'User not found system',
-                    code: ErrorCodes.USER_NOT_FOUND,
-                }
-            }
-            if (error instanceof UnauthorizedException) {
-                return {
-                    success: false,
-                    message: 'Invalid password',
-                    code: ErrorCodes.INVALID_PASSWORD,
-                }
+            if (error.message === ErrorCodes.USER_NOT_FOUND) {
+                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND));
             }
 
-            return {
-                success: false,
-                message: 'Something went wrong',
-                code: ErrorCodes.INTERNAL_SERVER_ERROR
-            };
+            if (error.message === ErrorCodes.INVALID_PASSWORD) {
+                throw new UnauthorizedException(ResponseHelper.invalidPassword('User', ErrorCodes.INVALID_PASSWORD));
+            }
+
+            throw new InternalServerErrorException(
+                ResponseHelper.internalError()
+            );
         }
     }
 

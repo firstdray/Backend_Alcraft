@@ -35,7 +35,7 @@ export class UsersController {
         } catch (err) {
             this.logger.error('Failed to fetch User', err.stack);
 
-            if (err instanceof NotFoundException) {
+            if (err.message === ErrorCodes.USER_NOT_FOUND) {
                 throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND));
             }
 
@@ -52,7 +52,7 @@ export class UsersController {
         }catch(error) {
             this.logger.error('Failed to add user', error.stack);
 
-            if (error instanceof ConflictException) {
+            if (error.message === ErrorCodes.USER_ALREADY_EXISTS) {
                 throw new ConflictException(ResponseHelper.alreadyExists('User', ErrorCodes.USER_ALREADY_EXISTS))
             }
 
@@ -62,14 +62,14 @@ export class UsersController {
 
     @Put('/update/:id')
     @HttpCode(HttpStatus.OK)
-    async updateUser(@Param('id') id: string, @Body() updateData: UpdateUserDTO):Promise<SuccessResponse<UserWithoutDTO>> {
+    async updateUser(@Param('id') id: string, @Body() updateData: UpdateUserDTO): Promise<SuccessResponse<UserWithoutDTO>> {
         try {
             const updateUser = await this.usersService.updateUser(id, updateData);
             return ResponseHelper.updated('User', updateUser, SuccessCodes.USER_UPDATED)
         } catch (error) {
             this.logger.error('Failed to update user', error.stack);
 
-            if (error instanceof NotFoundException) {
+            if (error.message === ErrorCodes.USER_NOT_FOUND) {
                 throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND))
             }
 
@@ -77,7 +77,7 @@ export class UsersController {
         }
     }
 
-    @Delete('/:id')
+    @Delete('/delete/:id')
     @HttpCode(HttpStatus.NO_CONTENT)
     async deleteUser(@Param('id') id: string): Promise<SuccessResponse<null>> {
         this.logger.log(`Deleting User with ID: ${id}`)
@@ -85,10 +85,10 @@ export class UsersController {
             await this.usersService.deleteUser(id);
             return ResponseHelper.delete('User', null, SuccessCodes.USER_DELETED);
         } catch (error) {
-            this.logger.error(`Failed to delete User with ID: ${id}`, error.stack);
+            this.logger.error(`Failed to delete User`, error.stack);
 
-            if (error instanceof NotFoundException) {
-                throw new NotFoundException(ResponseHelper.notFound('T-Shirts', ErrorCodes.TSHIRT_NOT_FOUND))
+            if (error.message === ErrorCodes.USER_NOT_FOUND) {
+                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND))
             }
 
             throw new InternalServerErrorException(ResponseHelper.internalError())

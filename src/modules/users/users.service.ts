@@ -1,14 +1,19 @@
 import {InjectRepository} from "@nestjs/typeorm";
 import {UsersEntity} from "./users.entity";
-import {Repository} from "typeorm";
+import {FindOptionsWhere, Repository} from "typeorm";
 import {CreateUserDTO} from "./DTO/create-user.dto";
-import {ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException,} from "@nestjs/common";
+import {
+    Injectable,
+    InternalServerErrorException,
+    Logger,
+} from "@nestjs/common";
 import {UpdateUserDTO} from "./DTO/update-user.dto";
 import * as uuid from "uuid";
 import {HashedHelper} from "../common/helpers/hashed.helper";
 import {ResponseHelper} from "../common/helpers/response.helper";
 import {UserWithoutDTO} from "./DTO/user-without.dto";
 import {ErrorCodes} from "../common/enum/error-codes.enum";
+import {UserJWT} from "./DTO/userJWTdto";
 
 @Injectable()
 export class UsersService {
@@ -25,7 +30,8 @@ export class UsersService {
         })
 
         if (exUser) {
-            throw new ConflictException(ResponseHelper.alreadyExists('User', ErrorCodes.USER_ALREADY_EXISTS))
+            this.logger.warn(`Failed to create: user already with: ${createData.email}`);
+            throw new Error(ErrorCodes.USER_ALREADY_EXISTS)
         }
 
         try {
@@ -44,15 +50,18 @@ export class UsersService {
             this.logger.log(`User with ID: ${saved.id} created successfully`);
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {pass, ...userWithoutPass} = newUser;
-            return userWithoutPass;
+            const {pass, email, phone, ...userPublic} = newUser;
+            return userPublic;
         } catch (error) {
-            this.logger.error(`Failed to create user ${createData.email}`, error.stack);
+            if (error.message === ErrorCodes.USER_ALREADY_EXISTS) {
+                throw error;
+            }
+
             throw new InternalServerErrorException(ResponseHelper.internalError());
         }
     }
 
-    public async updateUser(id: string, updateData: UpdateUserDTO): Promise<UsersEntity> {
+    public async updateUser(id: string, updateData: UpdateUserDTO): Promise<UserWithoutDTO> {
         this.logger.log(`Updating User with ID: ${id}`);
         try {
             const user = await this.usersRepository.findOneBy({
@@ -60,24 +69,42 @@ export class UsersService {
             })
 
             if (!user) {
-                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND));
+                this.logger.warn(`User with ID: ${id} not found`)
+                throw new Error(ErrorCodes.USER_NOT_FOUND);
             }
 
             this.usersRepository.merge(user, updateData);
-            const updatedUser =  this.usersRepository.save(user);
+            const updatedUser = await this.usersRepository.save(user);
 
             this.logger.log(`User with ID ${id} updated successfully`)
-            return updatedUser;
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const {pass, email, phone, id: DBid, ...userPublic} = updatedUser;
+
+            return userPublic;
         }catch (err) {
-            this.logger.error(`Failed to update user with ID: ${id}`, err.stack);
+            this.logger.error(`Failed to update user with ID: ${id}`);
+
+            if (err.message === ErrorCodes.USER_NOT_FOUND) {
+                throw err;
+            }
+
             throw new InternalServerErrorException(ResponseHelper.internalError());
         }
     }
 
-    public async getUser(criteria: {email?: string; phone?: string}) {
-        return this.usersRepository.findOne({
-            where: criteria
-        })
+    public async getUser(email?: string, phone?: string): Promise<UsersEntity> {
+        const whereCondition: FindOptionsWhere<UsersEntity> = {};
+        if (email) whereCondition.email = email
+        if (phone) whereCondition.phone = phone
+
+        const user = await this.usersRepository.findOne({where: whereCondition})
+
+        if (!user) {
+            throw new Error(ErrorCodes.USER_NOT_FOUND)
+        }
+
+        return user;
     }
 
     public async getUserById(id: string): Promise<UserWithoutDTO> {
@@ -90,14 +117,20 @@ export class UsersService {
 
 
             if (!user) {
-                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND));
+                this.logger.warn(`User with ID: ${id} not found`)
+                throw new Error(ErrorCodes.USER_NOT_FOUND);
             }
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {pass, ...userWithoutPass} = user;
-            return userWithoutPass;
+            const {pass, email, phone, id: DBid, ...userPublic} = user;
+            return userPublic;
         } catch (err) {
-            this.logger.error(`User with ID ${id} not found`, err.stack)
+            this.logger.error(`User with ID ${id} not found`)
+
+            if (err.message === ErrorCodes.USER_NOT_FOUND) {
+                throw err;
+            }
+
             throw new InternalServerErrorException(ResponseHelper.internalError());
         }
     }
@@ -108,14 +141,35 @@ export class UsersService {
 
             if (result.affected === 0) {
                 this.logger.warn(`User with ID: ${id} not found`)
-                throw new NotFoundException(ResponseHelper.notFound('User', ErrorCodes.USER_NOT_FOUND));
+                throw new Error(ErrorCodes.USER_NOT_FOUND);
             }
 
             this.logger.log(`User with ID ${id} deleted successfully`);
             return true;
         } catch (err) {
-            this.logger.error(`Failed to delete User with ID: ${id}`, err.stack);
+            this.logger.error(`Failed to delete User with ID: ${id}`);
+
+            if (err.message === ErrorCodes.USER_NOT_FOUND) {
+                throw err;
+            }
+
             throw new InternalServerErrorException(ResponseHelper.internalError());
         }
+    }
+
+    public async getUserByJWT(id: string): Promise<UserJWT> {
+        const user =  await this.usersRepository.findOneBy({
+            userId: id
+        })
+
+
+        if (!user) {
+            this.logger.warn(`User with ID: ${id} not found`)
+            throw new Error(ErrorCodes.USER_NOT_FOUND);
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const {pass, ...userPublic} = user;
+        return userPublic;
     }
 }
