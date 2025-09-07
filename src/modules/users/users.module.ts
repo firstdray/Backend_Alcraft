@@ -5,6 +5,7 @@ import {UsersEntity} from "./users.entity";
 import {ConfigModule} from "@nestjs/config";
 import {UsersService} from "./users.service";
 import {UsersController} from "./users.controller";
+import {CartModule} from "../cart/cart.module";
 
 const entities = [UsersEntity];
 
@@ -26,6 +27,7 @@ const entities = [UsersEntity];
             entities: entities,
         }),
         TypeOrmModule.forFeature(entities),
+        CartModule,
     ],
     controllers: [UsersController],
     providers: [UsersService],

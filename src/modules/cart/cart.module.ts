@@ -5,6 +5,7 @@ import * as process from "node:process";
 import {CartEntity} from "./cart.entity";
 import {CartService} from "./cart.service";
 import {CartItemsModule} from "./cart-items/cart-items.module";
+import {CartController} from "./cart.controller";
 
 const entities = [CartEntity]
 
@@ -28,8 +29,9 @@ const entities = [CartEntity]
         TypeOrmModule.forFeature(entities),
         CartItemsModule,
     ],
-    controllers: [],
+    controllers: [CartController],
     providers: [CartService],
+    exports: [CartService],
 })
 
 export class CartModule {}

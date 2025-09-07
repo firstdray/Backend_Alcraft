@@ -1,4 +1,5 @@
 import {BaseEntity, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn} from "typeorm";
+import {CartItem} from "../cart/cart-items/interfaces/cart-items.interfaces";
 
 @Entity('orders')
 export class OrdersEntity extends BaseEntity{
@@ -9,14 +10,17 @@ export class OrdersEntity extends BaseEntity{
     @Column({name: 'user_id'})
     userId: string;
 
-    @Column()
-    count: number;
+    @Column({type: 'jsonb'})
+    items: CartItem
 
-    @Column()
-    price: number;
+    @Column({name: 'total_count'})
+    totalCount: string;
+
+    @Column({name: 'total_amount'})
+    totalAmount: string;
 
     @Index()
-    @Column()
+    @Column({nullable: true})
     stage: string;
 
     @CreateDateColumn()

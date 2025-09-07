@@ -36,7 +36,7 @@ export class TShirtController {
         } catch (error) {
             this.logger.error(`Failed to fetch T-Shirts`, error.stack);
 
-            if (error instanceof NotFoundException) {
+            if (error.message === ErrorCodes.TSHIRT_NOT_FOUND) {
                 throw new NotFoundException(ResponseHelper.notFound('T-Shirts', ErrorCodes.TSHIRT_NOT_FOUND));
             }
 
@@ -53,7 +53,7 @@ export class TShirtController {
         } catch (error) {
             this.logger.error('Failed to add T-shirt', error.stack);
 
-            if (error instanceof ConflictException) {
+            if (error.message === ErrorCodes.TSHIRT_ALREADY_EXISTS) {
                 throw new ConflictException(ResponseHelper.alreadyExists('T-Shirt', ErrorCodes.TSHIRT_ALREADY_EXISTS));
             }
             throw new InternalServerErrorException(ResponseHelper.internalError())
@@ -71,7 +71,7 @@ export class TShirtController {
         } catch (error) {
             this.logger.error(`Failed to update T-shirt ${id}`, error.stack);
 
-            if (error instanceof NotFoundException) {
+            if (error.message === ErrorCodes.TSHIRT_NOT_FOUND) {
                 throw new NotFoundException(ResponseHelper.notFound('T-Shirts', ErrorCodes.TSHIRT_NOT_FOUND))
             }
 
@@ -88,7 +88,7 @@ export class TShirtController {
         } catch (error) {
             this.logger.error(`Failed to delete T-shirt ${id}`, error.stack);
 
-            if (error instanceof NotFoundException) {
+            if (error.message === ErrorCodes.TSHIRT_NOT_FOUND) {
                 throw new NotFoundException(ResponseHelper.notFound('T-Shirts', ErrorCodes.TSHIRT_NOT_FOUND))
             }
 

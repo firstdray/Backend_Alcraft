@@ -14,6 +14,7 @@ import {ResponseHelper} from "../common/helpers/response.helper";
 import {UserWithoutDTO} from "./DTO/user-without.dto";
 import {ErrorCodes} from "../common/enum/error-codes.enum";
 import {UserJWT} from "./DTO/userJWTdto";
+import {CartService} from "../cart/cart.service";
 
 @Injectable()
 export class UsersService {
@@ -21,7 +22,7 @@ export class UsersService {
     constructor(
         @InjectRepository(UsersEntity)
         private readonly usersRepository: Repository<UsersEntity>,
-
+        private readonly cartService: CartService
     ) {}
 
     public async addNewUser(createData: CreateUserDTO): Promise<UserWithoutDTO> {
@@ -49,6 +50,10 @@ export class UsersService {
 
             const saved = await this.usersRepository.save(newUser);
             this.logger.log(`User with ID: ${saved.id} created successfully`);
+
+            const newCart = await this.cartService.addCart(saved.userId)
+            this.logger.log(`Cart create by user with ID: ${newCart.cartId}`);
+
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const {pass, ...userPublic} = newUser;

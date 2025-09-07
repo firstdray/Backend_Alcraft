@@ -15,9 +15,13 @@ export enum SuccessCodes {
     TSHIRT_DELETED = 'TSHIRT_DELETED',
 
     // Order success codes
+    ORDER_FOUND = 'ORDER_FOUND',
     ORDER_CREATED = 'ORDER_CREATED',
     ORDER_UPDATED = 'ORDER_UPDATED',
     ORDER_DELETED = 'ORDER_DELETED',
+
+    // Cart
+    CART_ADDED = 'CART_ADDED',
 
     // General success codes
     OPERATION_SUCCESSFUL = 'OPERATION_SUCCESSFUL',

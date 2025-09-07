@@ -2,7 +2,7 @@ import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
 import {CartItem} from "./interfaces/cart-items.interfaces";
 
 @Entity('cart-items')
-export class CartItems {
+export class CartItemsEntity {
     @PrimaryGeneratedColumn()
     id: number;
 

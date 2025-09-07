@@ -1,4 +1,4 @@
-import {ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException} from '@nestjs/common';
+import {Injectable, InternalServerErrorException, Logger} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
 import {TShirtEntity} from "./t-shirt.entity";
 import {Repository} from "typeorm";
@@ -21,10 +21,21 @@ export class TShirtService {
 
         try {
             const tShirts = await this.tShirtRepository.find();
+
+            if(tShirts.length === 0) {
+                this.logger.warn('No T-Shirts');
+                throw new Error(ErrorCodes.TSHIRT_NOT_FOUND)
+            }
+
             this.logger.log(`Found ${tShirts.length} T-Shirts`);
             return tShirts;
         } catch (error) {
-            this.logger.error('Failed to fetch T-Shirts', error.stack);
+            this.logger.error('Failed to fetch T-Shirts');
+
+            if(error.message === ErrorCodes.TSHIRT_NOT_FOUND) {
+                throw error;
+            }
+
             throw new InternalServerErrorException(ResponseHelper.internalError());
         }
     }
@@ -36,7 +47,8 @@ export class TShirtService {
         });
 
         if (exTShirt) {
-            throw new ConflictException(ResponseHelper.alreadyExists('T-Shirt', ErrorCodes.TSHIRT_ALREADY_EXISTS))
+            this.logger.warn(`T-Shirt with ID: ${createData.tShirtId} already exists`);
+            throw new Error(ErrorCodes.TSHIRT_ALREADY_EXISTS)
         }
 
         try {
@@ -61,7 +73,12 @@ export class TShirtService {
 
             return saved;
         } catch (error) {
-            this.logger.error(`Failed to create T-Shirt ${createData.tShirtId}`, error.stack);
+            this.logger.error(`Failed to create T-Shirt ${createData.tShirtId}`);
+
+            if (error.message === ErrorCodes.TSHIRT_ALREADY_EXISTS) {
+                throw error;
+            }
+
             throw new InternalServerErrorException(ResponseHelper.internalError());
         }
     }
@@ -77,7 +94,7 @@ export class TShirtService {
 
             if (!tShirt) {
                 this.logger.warn(`T-Shirt with ID ${id} not found`);
-                throw new NotFoundException(ResponseHelper.notFound('T-Shirt', ErrorCodes.TSHIRT_NOT_FOUND));
+                throw new Error(ErrorCodes.TSHIRT_NOT_FOUND);
             }
 
             this.tShirtRepository.merge(tShirt, updateData);
@@ -86,7 +103,12 @@ export class TShirtService {
             this.logger.log(`T-Shirt with ID ${id} updated successfully`);
             return updatedTShirt;
         } catch (error) {
-            this.logger.error(`Failed to update T-Shirt ${id}`, error.stack);
+            this.logger.error(`Failed to update T-Shirt ${id}`);
+
+            if (error.message === ErrorCodes.TSHIRT_NOT_FOUND) {
+                throw error;
+            }
+
             throw new InternalServerErrorException(ResponseHelper.internalError());
         }
 
@@ -101,14 +123,19 @@ export class TShirtService {
 
             if (result.affected === 0) {
                 this.logger.warn(`T-Shirt with ID: ${id} not found`);
-                throw new NotFoundException(ResponseHelper.notFound('T-Shirt', ErrorCodes.TSHIRT_NOT_FOUND));
+                throw new Error(ErrorCodes.TSHIRT_NOT_FOUND);
             }
 
             this.logger.log(`T-Shirt with ID: ${id} deleted successfully`);
             return true;
 
         } catch (error) {
-            this.logger.error(`Failed to delete T-Shirt ${id}`, error.stack);
+            this.logger.error(`Failed to delete T-Shirt ${id}`);
+
+            if (error.message === ErrorCodes.TSHIRT_NOT_FOUND) {
+                throw error;
+            }
+
             throw new InternalServerErrorException(ResponseHelper.internalError());
         }
     }
