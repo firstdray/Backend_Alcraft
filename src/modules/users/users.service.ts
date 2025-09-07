@@ -50,7 +50,7 @@ export class UsersService {
             this.logger.log(`User with ID: ${saved.id} created successfully`);
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {pass, email, phone, ...userPublic} = newUser;
+            const {pass, phone, ...userPublic} = newUser;
             return userPublic;
         } catch (error) {
             if (error.message === ErrorCodes.USER_ALREADY_EXISTS) {
@@ -79,7 +79,7 @@ export class UsersService {
             this.logger.log(`User with ID ${id} updated successfully`)
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {pass, email, phone, id: DBid, ...userPublic} = updatedUser;
+            const {pass, phone, id: DBid, ...userPublic} = updatedUser;
 
             return userPublic;
         }catch (err) {
@@ -122,7 +122,7 @@ export class UsersService {
             }
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {pass, email, phone, id: DBid, ...userPublic} = user;
+            const {pass, phone, id: DBid, ...userPublic} = user;
             return userPublic;
         } catch (err) {
             this.logger.error(`User with ID ${id} not found`)

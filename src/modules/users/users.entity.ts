@@ -27,4 +27,7 @@ export class UsersEntity extends BaseEntity {
 
     @Column()
     email: string;
+
+    @Column({name: 'date_of_birth'})
+    dateOfBirth: Date;
 }
