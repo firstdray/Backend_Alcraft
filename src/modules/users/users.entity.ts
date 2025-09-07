@@ -28,6 +28,6 @@ export class UsersEntity extends BaseEntity {
     @Column()
     email: string;
 
-    @Column({name: 'date_of_birth'})
+    @Column({name: 'date_of_birth', nullable: true})
     dateOfBirth: Date;
 }

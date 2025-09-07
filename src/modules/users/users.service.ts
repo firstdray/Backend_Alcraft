@@ -44,6 +44,7 @@ export class UsersService {
                 patronymic: createData.patronymic || '',
                 phone: createData.phone,
                 email: createData.email,
+                dateOfBirth: createData.dateOfBirth
             })
 
             const saved = await this.usersRepository.save(newUser);
