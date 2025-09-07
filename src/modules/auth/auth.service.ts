@@ -36,7 +36,9 @@ export class AuthService {
                 });
             }
 
-            const isPasswordValid = await HashedHelper.comparePassword(checkData.pass, user.pass)
+            const hashedPassDB = await HashedHelper.hashPassword(checkData.pass)
+
+            const isPasswordValid = await HashedHelper.comparePassword(checkData.pass, hashedPassDB)
 
             if (!isPasswordValid) {
                 this.logger.warn('Invalid password');
@@ -46,7 +48,7 @@ export class AuthService {
             const tokens = await this.generateTokens(user)
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const {pass, email, phone, id: DBid, ...userPublic} = user;
+            const {pass, id: DBid, ...userPublic} = user;
             return {
                 success: true,
                 message: 'Login Success',
