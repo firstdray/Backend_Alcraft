@@ -42,7 +42,6 @@ export class CartController {
 
             throw new InternalServerErrorException(ResponseHelper.internalError())
         }
-
     }
 
 

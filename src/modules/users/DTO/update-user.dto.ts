@@ -1,4 +1,4 @@
-import {IsOptional, IsString} from "class-validator";
+import {IsDate, IsOptional, IsString} from "class-validator";
 
 export class UpdateUserDTO {
     @IsOptional()
@@ -24,4 +24,8 @@ export class UpdateUserDTO {
     @IsOptional()
     @IsString()
     email: string;
+
+    @IsOptional()
+    @IsDate()
+    dateOfBirth: Date;
 }

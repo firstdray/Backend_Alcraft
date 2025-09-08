@@ -2,7 +2,6 @@ import {
     Injectable,
     InternalServerErrorException,
     Logger,
-    NotFoundException,
     UnauthorizedException
 } from "@nestjs/common";
 import {UsersService} from "../users/users.service";
@@ -29,16 +28,12 @@ export class AuthService {
             const user = await this.usersService.getUser(checkData.email, checkData.phone)
 
             if (!user) {
-                this.logger.log('User not found');
-                throw new NotFoundException({
-                    message: 'User not found system',
-                    code: ErrorCodes.USER_NOT_FOUND,
-                });
+                this.logger.warn('User not found');
+                throw new Error(ErrorCodes.USER_NOT_FOUND);
             }
 
-            const hashedPassDB = await HashedHelper.hashPassword(checkData.pass)
 
-            const isPasswordValid = await HashedHelper.comparePassword(checkData.pass, hashedPassDB)
+            const isPasswordValid = await HashedHelper.comparePassword(checkData.pass, user.pass)
 
             if (!isPasswordValid) {
                 this.logger.warn('Invalid password');
