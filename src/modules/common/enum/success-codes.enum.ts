@@ -23,6 +23,9 @@ export enum SuccessCodes {
     // Cart
     CART_ADDED = 'CART_ADDED',
 
+    // Cart items
+    CART_ITEMS_FOUND = 'CART_ITEMS_FOUND',
+
     // General success codes
     OPERATION_SUCCESSFUL = 'OPERATION_SUCCESSFUL',
     DATA_RETRIEVED = 'DATA_RETRIEVED',
