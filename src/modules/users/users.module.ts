@@ -23,7 +23,7 @@ const entities = [UsersEntity];
             password: process.env.DB_PASSWORD,
             database: process.env.DB_NAME,
             autoLoadEntities: true,
-            synchronize: true,
+            synchronize: false,
             entities: entities,
         }),
         TypeOrmModule.forFeature(entities),
