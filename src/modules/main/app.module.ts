@@ -19,6 +19,7 @@ import {TypeOrmModule} from "@nestjs/typeorm";
           ssl: { rejectUnauthorized: false},
           autoLoadEntities: true,
           synchronize: false,
+          migrations: [__dirname + '/../migrations/*{.ts,.js}'],
       }),
       AuthModule,
       UsersModule,
