@@ -12,7 +12,7 @@ NODE_ENV = "production"
 
 [[services]]
 name = "web"
-$default = true
+default = true
 
 [[services]]
 name = "migrations"
