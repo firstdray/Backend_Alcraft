@@ -20,6 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "postbuild": "ls -R dist"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
