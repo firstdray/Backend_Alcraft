@@ -16,6 +16,7 @@ import {SuccessResponse} from "../common/interface/api-response.interface";
 import {OrdersEntity} from "./orders.entity";
 import {CreateOrderDTO} from "./DTO/create-orders.dto";
 import {WtnIdOrdersDto} from "./DTO/wtn-id-orders.dto";
+import {UpdateStageOrders} from "./DTO/update-stage-orders.dto";
 
 @Controller('orders')
 export class OrdersController {
@@ -75,9 +76,9 @@ export class OrdersController {
     }
 
     @Put('/update-stage')
-    async updateStage(@Body() userId: string, stage: string): Promise<SuccessResponse<WtnIdOrdersDto>> {
+    async updateStage(@Body() updateData: UpdateStageOrders): Promise<SuccessResponse<WtnIdOrdersDto>> {
         try {
-            const updOrder = await this.ordersService.updateStageOrder(userId, stage);
+            const updOrder = await this.ordersService.updateStageOrder(updateData.userId, updateData.stage);
             return ResponseHelper.updated('Orders', updOrder, SuccessCodes.ORDER_UPDATED)
         } catch (error) {
             this.logger.error('Failed to update StageOrders', error.stack);
