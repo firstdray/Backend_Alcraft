@@ -19,7 +19,7 @@ export class OrdersEntity extends BaseEntity{
     @Column({name: 'total_amount'})
     totalAmount: string;
 
-    @Column()
+    @Column({default: ''})
     address: string;
 
     @Index()
