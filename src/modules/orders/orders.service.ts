@@ -115,4 +115,35 @@ export class OrdersService {
             throw new InternalServerErrorException(ResponseHelper.internalError());
         }
     }
+
+    public async updateStageOrder(userId: string, stage: string): Promise<WtnIdOrdersDto> {
+        this.logger.log(`Updating order with userId: ${userId}`);
+        try {
+            const order = await this.ordersRepository.findOne({
+                where: {userId: userId},
+                order: {created_at: 'DESC'}
+            })
+
+            if (!order) {
+                this.logger.warn(`User with ID: ${userId} not found`);
+                throw new Error(ErrorCodes.ORDER_NOT_FOUND);
+            }
+
+            this.ordersRepository.merge(order, {stage: stage});
+            const updOrder = await this.ordersRepository.save(order);
+
+            this.logger.log(`Updating stage on: ${stage} order with Id: ${updOrder.id}`);
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const {id, ...orders} = updOrder;
+            return orders;
+        } catch (error) {
+
+            if(error.message === ErrorCodes.ORDER_NOT_FOUND) {
+                throw error;
+            }
+
+            throw new InternalServerErrorException(ResponseHelper.internalError());
+        }
+    }
 }
