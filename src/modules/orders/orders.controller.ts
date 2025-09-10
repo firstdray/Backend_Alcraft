@@ -6,7 +6,7 @@ import {
     InternalServerErrorException,
     Logger,
     Param,
-    Post
+    Post, Put
 } from "@nestjs/common";
 import {OrdersService} from "./orders.service";
 import {ResponseHelper} from "../common/helpers/response.helper";
@@ -68,6 +68,22 @@ export class OrdersController {
 
             if (error.message === ErrorCodes.CART_NOT_FOUND) {
                 throw new ConflictException(ResponseHelper.notFound('Orders', ErrorCodes.CART_ITEMS_NOT_FOUND));
+            }
+
+            throw new ConflictException(ResponseHelper.internalError())
+        }
+    }
+
+    @Put()
+    async updateStage(@Body() userId: string, stage: string): Promise<SuccessResponse<WtnIdOrdersDto>> {
+        try {
+            const updOrder = await this.ordersService.updateStageOrder(userId, stage);
+            return ResponseHelper.updated('Orders', updOrder, SuccessCodes.ORDER_UPDATED)
+        } catch (error) {
+            this.logger.error('Failed to update StageOrders', error.stack);
+
+            if (error.message === ErrorCodes.ORDER_NOT_FOUND) {
+                throw new ConflictException(ResponseHelper.notFound('Orders', ErrorCodes.ORDER_NOT_FOUND));
             }
 
             throw new ConflictException(ResponseHelper.internalError())
