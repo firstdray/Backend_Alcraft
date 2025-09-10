@@ -19,7 +19,31 @@ export class OrdersService {
         private readonly cartItemsService: CartItemsService,
     ) {}
 
+    public async getAllOrders(): Promise<OrdersEntity[]> {
+        this.logger.log(`Fetching All Orders`);
+        try {
+            const orders = await this.ordersRepository.find();
+
+            if (orders.length === 0) {
+                this.logger.warn('No orders found');
+                throw new Error(ErrorCodes.ORDER_NOT_FOUND)
+            }
+
+            this.logger.log(`Found ${orders.length} Orders`);
+            return orders;
+        } catch (error) {
+            this.logger.error('Failed to fetch Orders');
+
+            if(error.message === ErrorCodes.ORDER_NOT_FOUND) {
+                throw error;
+            }
+
+            throw new InternalServerErrorException(ResponseHelper.internalError());
+        }
+    }
+
     public async getOrdersById(userId: string): Promise<OrdersEntity[]> {
+        this.logger.log(`Fetching Orders by userId: ${userId}`);
         try {
             const orders = await this.ordersRepository.findBy({
                 userId: userId
@@ -66,6 +90,7 @@ export class OrdersService {
                 userId: createData.userId,
                 totalCount: createData.totalCount,
                 totalAmount: createData.totalAmount,
+                address: createData.address,
                 items: cartItems.items,
                 created_at: new Date()
             })

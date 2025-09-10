@@ -22,7 +22,23 @@ export class OrdersController {
     private readonly logger = new Logger(OrdersController.name);
     constructor(private readonly ordersService: OrdersService) {}
 
-    @Get('/:id')
+    @Get('/get')
+    async getAllOrders(): Promise<SuccessResponse<OrdersEntity[]>> {
+        try {
+            const found = await this.ordersService.getAllOrders();
+            return ResponseHelper.found('Orders', found, SuccessCodes.ORDER_FOUND);
+        } catch(error) {
+            this.logger.error(`Failed to fetch Orders`, error.stack);
+
+            if (error.message === ErrorCodes.ORDER_NOT_FOUND) {
+                throw new ConflictException(ResponseHelper.notFound('Orders', ErrorCodes.ORDER_NOT_FOUND));
+            }
+
+            throw new InternalServerErrorException(ResponseHelper.internalError())
+        }
+    }
+
+    @Get('/get/:id')
     async getOrdersById(@Param('id') userId: string): Promise<SuccessResponse<OrdersEntity[]>> {
         try {
             const found = await this.ordersService.getOrdersById(userId)
