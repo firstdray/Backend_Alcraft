@@ -74,7 +74,7 @@ export class OrdersController {
         }
     }
 
-    @Put()
+    @Put('/update-stage')
     async updateStage(@Body() userId: string, stage: string): Promise<SuccessResponse<WtnIdOrdersDto>> {
         try {
             const updOrder = await this.ordersService.updateStageOrder(userId, stage);
