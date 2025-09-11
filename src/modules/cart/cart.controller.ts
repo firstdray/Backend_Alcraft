@@ -21,7 +21,7 @@ export class CartController {
     private readonly logger = new Logger(CartController.name);
     constructor(private readonly cartService: CartService, private readonly cartItemsService: CartItemsService) {}
 
-    @Get('get')
+    @Get('get/:id')
     @HttpCode(HttpStatus.OK)
     async getItem(@Param('id') userId: string): Promise<SuccessResponse<CartItemsEntity>> {
         try {
