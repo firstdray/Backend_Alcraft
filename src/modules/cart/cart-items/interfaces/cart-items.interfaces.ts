@@ -1,6 +1,6 @@
 export interface CartItem {
     tShirtId: string;
-    count: number;
+    quantity: number;
     price: number;
     size: Array<string>;
     density: Array<string>;
